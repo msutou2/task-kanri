@@ -1,0 +1,469 @@
+[task-app-cloud.html](https://github.com/user-attachments/files/25621555/task-app-cloud.html)
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GRID — タスク管理</title>
+<link href="https://fonts.googleapis.com/css2?family=Kaisei+Decol:wght@400;700&family=DM+Mono:wght@400;500&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f2ee; --surface: #ffffff; --surface2: #f0ece6;
+  --border: #ddd8d0; --border2: #c8c2b8;
+  --text: #1a1714; --text-muted: #8a8480; --text-dim: #b8b4b0; --ink: #1a1714;
+  --red: #c0392b; --red-light: #fdf0ee;
+  --blue: #1a5276; --blue-light: #eaf2fb;
+  --yellow: #b7950b; --yellow-light: #fefde7;
+  --green: #1e8449; --green-light: #eafaf1;
+  --row-h: 58px; --radius: 4px; --date-head-h: 36px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'Noto Sans JP', sans-serif; font-size: 13px; min-height: 100vh; display: flex; flex-direction: column; }
+header { background: var(--ink); padding: 0 20px; height: 48px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+.logo { font-family: 'Kaisei Decol', serif; font-size: 18px; color: #f5f2ee; letter-spacing: 2px; }
+.logo span { font-family: 'DM Mono', monospace; font-size: 10px; color: #888; margin-left: 10px; }
+.hbtn { padding: 5px 12px; border-radius: var(--radius); border: 1px solid #333; background: transparent; color: #aaa; font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1px; cursor: pointer; transition: all 0.15s; }
+.hbtn:hover { background: #222; color: #eee; border-color: #555; }
+.addbar { background: var(--surface); border-bottom: 2px solid var(--ink); padding: 10px 20px; display: flex; gap: 10px; align-items: center; }
+.add-main-input { flex: 1; background: transparent; border: none; border-bottom: 2px solid var(--border2); padding: 6px 2px; font-family: 'Noto Sans JP', sans-serif; font-size: 14px; color: var(--text); outline: none; transition: border-color 0.15s; }
+.add-main-input:focus { border-color: var(--ink); }
+.add-main-input::placeholder { color: var(--text-dim); }
+.add-btn-main { padding: 7px 20px; background: var(--ink); color: var(--bg); border: none; border-radius: var(--radius); font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 1px; cursor: pointer; white-space: nowrap; }
+.add-btn-main:hover { opacity: 0.8; }
+.main-layout { display: flex; flex: 1; overflow: hidden; height: calc(100vh - 48px - 44px - var(--date-head-h)); }
+.nav-bar { height: 44px; background: var(--surface2); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 12px; gap: 0; flex-shrink: 0; }
+.nav-left { width: 320px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding-right: 12px; border-right: 2px solid var(--ink); }
+.nav-right { flex: 1; display: flex; align-items: center; gap: 8px; padding-left: 12px; }
+.task-pane { width: 320px; flex-shrink: 0; display: flex; flex-direction: column; background: var(--surface); border-right: 2px solid var(--ink); overflow: hidden; }
+.date-head-spacer { height: var(--date-head-h); flex-shrink: 0; background: var(--surface); border-bottom: 2px solid var(--ink); }
+.task-list-scroll { flex: 1; overflow-y: auto; overflow-x: hidden; }
+.calendar-pane { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.date-head-wrapper { height: var(--date-head-h); flex-shrink: 0; overflow: hidden; border-bottom: 2px solid var(--ink); background: var(--surface); }
+.date-head-inner { display: flex; height: var(--date-head-h); }
+.cal-scroll { flex: 1; overflow: auto; }
+.cal-inner { display: inline-block; min-width: 100%; }
+.cal-day-cell { width: 44px; flex-shrink: 0; height: var(--date-head-h); border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-muted); }
+.cal-day-cell .dn { font-size: 13px; font-weight: 500; line-height: 1; color: inherit; }
+.cal-day-cell .mo { font-size: 11px; font-weight: 700; line-height: 1; color: inherit; letter-spacing: 0.5px; }
+.cal-day-cell.today-col { background: var(--ink); color: var(--bg); }
+.cal-day-cell.weekend { background: var(--surface2); color: #888; }
+.cal-day-cell.holiday { background: #fff0f0; color: var(--red); }
+.cal-task-row { display: flex; border-bottom: 1px solid var(--border); height: var(--row-h); }
+.cal-task-row.color-red { background: var(--red-light); }
+.cal-task-row.color-blue { background: var(--blue-light); }
+.cal-task-row.color-yellow { background: var(--yellow-light); }
+.cal-cell { width: 44px; flex-shrink: 0; height: var(--row-h); border-right: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; }
+.cal-cell:hover { background: rgba(0,0,0,0.05); }
+.cal-cell.today-col { background: rgba(26,23,20,0.04); }
+.cal-cell.holiday-col { background: #fff5f5; }
+.cal-cell.drag-target { background: rgba(26,23,20,0.12); }
+.dot { width: 10px; height: 10px; border-radius: 50%; cursor: grab; }
+.dot:hover { transform: scale(1.3); }
+.dot-red { background: var(--red); } .dot-blue { background: var(--blue); } .dot-yellow { background: var(--yellow); } .dot-none { background: var(--text); }
+.deadline-tri { width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-bottom: 9px solid var(--red); opacity: 0.65; pointer-events: none; }
+.task-row { display: flex; align-items: center; min-height: var(--row-h); height: var(--row-h); border-bottom: 1px solid var(--border); cursor: grab; transition: background 0.1s; position: relative; padding: 0 6px 0 0; }
+.task-row:hover { background: var(--surface2); }
+.task-row.color-red { background: var(--red-light); } .task-row.color-red:hover { background: #fde8e6; }
+.task-row.color-blue { background: var(--blue-light); } .task-row.color-blue:hover { background: #ddeeff; }
+.task-row.color-yellow { background: var(--yellow-light); } .task-row.color-yellow:hover { background: #fdfce0; }
+.task-row.dragging { opacity: 0.3; } .task-row.drag-over { border-top: 2px solid var(--ink); }
+.color-strip { width: 4px; height: 100%; min-height: var(--row-h); flex-shrink: 0; }
+.strip-red { background: var(--red); } .strip-blue { background: var(--blue); } .strip-yellow { background: var(--yellow); } .strip-none { background: var(--border); }
+.task-body { flex: 1; padding: 6px 6px; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 1px; }
+.task-num { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-dim); line-height: 1.2; }
+.task-name { font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.4; }
+.task-sub { font-size: 10px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; display: block; }
+.task-btns { display: flex; gap: 2px; opacity: 0; flex-shrink: 0; }
+.task-row:hover .task-btns { opacity: 1; }
+.tbtn { width: 22px; height: 22px; border-radius: 3px; border: none; background: transparent; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 11px; }
+.tbtn:hover { background: var(--border); color: var(--text); }
+.tbtn.done:hover { background: var(--green-light); color: var(--green); }
+.tbtn.del:hover { background: var(--red-light); color: var(--red); }
+.empty-msg { padding: 32px 16px; text-align: center; color: var(--text-dim); font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1px; }
+::-webkit-scrollbar { width: 4px; height: 4px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+.cp-panel { position: fixed; right: -400px; top: 48px; width: 380px; height: calc(100vh - 48px); background: var(--surface); border-left: 2px solid var(--ink); z-index: 90; display: flex; flex-direction: column; transition: right 0.3s ease; box-shadow: -4px 0 20px rgba(0,0,0,0.1); }
+.cp-panel.open { right: 0; }
+.cp-head { padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--surface2); display: flex; justify-content: space-between; align-items: center; }
+.cp-title { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 2px; color: var(--text-muted); }
+.cp-close { width: 26px; height: 26px; border: none; background: transparent; cursor: pointer; font-size: 16px; color: var(--text-muted); border-radius: 3px; }
+.cp-list { flex: 1; overflow-y: auto; padding: 8px; }
+.cp-item { display: flex; gap: 8px; align-items: flex-start; padding: 10px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 4px; background: var(--surface2); }
+.cp-item-body { flex: 1; min-width: 0; }
+.cp-item-name { font-size: 12px; color: var(--text-muted); text-decoration: line-through; }
+.cp-item-date { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+.cp-btns { display: flex; gap: 4px; flex-shrink: 0; }
+.cp-btn { padding: 3px 7px; border-radius: 3px; border: 1px solid var(--border2); background: var(--surface); font-family: 'DM Mono', monospace; font-size: 9px; cursor: pointer; color: var(--text-muted); white-space: nowrap; }
+.cp-btn.top:hover { background: var(--green-light); color: var(--green); }
+.cp-btn.pos:hover { background: var(--blue-light); color: var(--blue); }
+.cp-btn.xdel:hover { background: var(--red-light); color: var(--red); }
+.modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; display: none; align-items: center; justify-content: center; }
+.modal-bg.open { display: flex; }
+.modal { background: var(--surface); border: 2px solid var(--ink); border-radius: 6px; padding: 24px; width: 460px; max-width: 95vw; }
+.modal-title { font-family: 'Kaisei Decol', serif; font-size: 16px; margin-bottom: 18px; }
+.fl { margin-bottom: 14px; }
+.fl label { display: block; font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 5px; }
+.fi { width: 100%; padding: 7px 10px; border: 1px solid var(--border2); border-radius: var(--radius); font-family: 'Noto Sans JP', sans-serif; font-size: 13px; color: var(--text); background: var(--surface); outline: none; }
+.fi:focus { border-color: var(--ink); }
+.color-row { display: flex; gap: 6px; }
+.co { flex: 1; padding: 7px 4px; border-radius: var(--radius); border: 2px solid var(--border); cursor: pointer; text-align: center; font-size: 11px; }
+.co.sel { border-color: var(--ink); font-weight: 500; }
+.co.c-red { background: var(--red-light); color: var(--red); } .co.c-red.sel { border-color: var(--red); }
+.co.c-blue { background: var(--blue-light); color: var(--blue); } .co.c-blue.sel { border-color: var(--blue); }
+.co.c-yellow { background: var(--yellow-light); color: var(--yellow); } .co.c-yellow.sel { border-color: var(--yellow); }
+.co.c-none { background: var(--surface2); color: var(--text-muted); }
+.modal-acts { display: flex; gap: 8px; margin-top: 18px; }
+.btn-ok { flex: 1; padding: 9px; background: var(--ink); color: var(--bg); border: none; border-radius: var(--radius); font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 1px; cursor: pointer; }
+.btn-ok:hover { opacity: 0.8; }
+.btn-cancel { padding: 9px 14px; background: transparent; color: var(--text-muted); border: 1px solid var(--border2); border-radius: var(--radius); font-family: 'DM Mono', monospace; font-size: 11px; cursor: pointer; }
+.conf-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 300; display: none; align-items: center; justify-content: center; }
+.conf-bg.open { display: flex; }
+.conf-box { background: var(--surface); border: 2px solid var(--ink); border-radius: 6px; padding: 22px; width: 340px; max-width: 95vw; }
+.conf-title { font-family: 'Kaisei Decol', serif; font-size: 15px; margin-bottom: 8px; }
+.conf-msg { font-size: 12px; color: var(--text-muted); line-height: 1.6; margin-bottom: 18px; }
+.conf-acts { display: flex; gap: 8px; }
+.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(14px); background: var(--ink); color: var(--bg); font-family: 'DM Mono', monospace; font-size: 11px; padding: 9px 18px; border-radius: 100px; opacity: 0; transition: all 0.25s; z-index: 999; pointer-events: none; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.cal-nav-btn { padding: 4px 8px; border: 1px solid var(--border2); background: transparent; border-radius: var(--radius); cursor: pointer; font-size: 11px; color: var(--text-muted); }
+.cal-nav-btn:hover { background: var(--border); }
+.cal-today-btn { padding: 4px 10px; border: 1px solid var(--ink); background: transparent; border-radius: var(--radius); cursor: pointer; font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1px; }
+.cal-today-btn:hover { background: var(--ink); color: var(--bg); }
+.cal-range { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-muted); margin-left: 4px; }
+.pane-title { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 2px; color: var(--text-muted); }
+.task-count { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-dim); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">GRID <span>TASK MANAGER</span></div>
+  <div><button class="hbtn" onclick="toggleCP()">📋 完了一覧</button></div>
+</header>
+
+<div class="addbar">
+  <input class="add-main-input" id="quickInput" placeholder="タスク名を入力してEnterで追加…">
+  <button class="add-btn-main" onclick="quickAdd()">+ ADD</button>
+</div>
+
+<div class="nav-bar">
+  <div class="nav-left">
+    <span class="pane-title">TASKS</span>
+    <span class="task-count" id="taskCount">読込中…</span>
+  </div>
+  <div class="nav-right">
+    <button class="cal-nav-btn" onclick="shiftCal(-14)">◀</button>
+    <button class="cal-nav-btn" onclick="shiftCal(14)">▶</button>
+    <button class="cal-today-btn" onclick="goToday()">TODAY</button>
+    <span class="cal-range" id="calRange"></span>
+  </div>
+</div>
+
+<div class="main-layout">
+  <div class="task-pane">
+    <div class="date-head-spacer"></div>
+    <div class="task-list-scroll" id="taskListScroll" onscroll="syncScroll(this)">
+      <div id="taskList"><div class="empty-msg">読み込み中…</div></div>
+    </div>
+  </div>
+  <div class="calendar-pane">
+    <div class="date-head-wrapper">
+      <div id="calHeadRow" class="date-head-inner"></div>
+    </div>
+    <div class="cal-scroll" id="calScroll" onscroll="syncScroll(this)">
+      <div class="cal-inner" id="calInner"></div>
+    </div>
+  </div>
+</div>
+
+<div class="cp-panel" id="cpPanel">
+  <div class="cp-head">
+    <span class="cp-title">COMPLETED</span>
+    <button class="cp-close" onclick="toggleCP()">×</button>
+  </div>
+  <div class="cp-list" id="cpList"></div>
+</div>
+
+<div class="modal-bg" id="editModal">
+  <div class="modal">
+    <div class="modal-title">タスクを編集</div>
+    <div class="fl"><label>タスク名 <span style="color:var(--red);font-size:9px">必須</span></label><input class="fi" id="eName" placeholder="タスク名"></div>
+    <div class="fl"><label>Next Action（具体的な動詞から）</label><input class="fi" id="eAction" placeholder="例：〇〇部長にメールを送る"></div>
+    <div class="fl"><label>期限（任意）</label><input class="fi" id="eDeadline" type="date"></div>
+    <div class="fl">
+      <label>カテゴリカラー</label>
+      <div class="color-row">
+        <div class="co c-red" id="eco-red" onclick="setEC('red')">🔴 緊急</div>
+        <div class="co c-blue" id="eco-blue" onclick="setEC('blue')">🔵 集中</div>
+        <div class="co c-yellow" id="eco-yellow" onclick="setEC('yellow')">🟡 定型</div>
+        <div class="co c-none sel" id="eco-none" onclick="setEC('none')">— なし</div>
+      </div>
+    </div>
+    <div class="modal-acts">
+      <button class="btn-ok" onclick="saveEdit()">保存</button>
+      <button class="btn-cancel" onclick="closeEdit()">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<div class="conf-bg" id="confBg">
+  <div class="conf-box">
+    <div class="conf-title" id="confTitle"></div>
+    <div class="conf-msg" id="confMsg"></div>
+    <div class="conf-acts" id="confActs"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase compat版SDK（グローバル関数と完全互換） -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+// ===== FIREBASE INIT =====
+firebase.initializeApp({
+  apiKey: "AIzaSyCUmqWjxtSq8JoMpYAH3dm3vtOnNnuXYC4",
+  authDomain: "task-kanri-74f88.firebaseapp.com",
+  databaseURL: "https://task-kanri-74f88-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "task-kanri-74f88",
+  storageBucket: "task-kanri-74f88.firebasestorage.app",
+  messagingSenderId: "202102807497",
+  appId: "1:202102807497:web:3c3b16caeeae91ff2e6618"
+});
+const db = firebase.database();
+
+// ===== STATE =====
+let tasks = [], done = [], calOff = 0;
+const CAL_DAYS = 90;
+let dragSrcIdx = null, dragDotInfo = null;
+let editId = null, editCol = 'none';
+let syncingScroll = false, isComposing = false;
+
+// ===== FIREBASE リアルタイム同期 =====
+db.ref('grid/tasks').on('value', snap => { tasks = snap.val() || []; render(); });
+db.ref('grid/done').on('value',  snap => { done  = snap.val() || []; });
+
+function save() {
+  db.ref('grid/tasks').set(tasks);
+  db.ref('grid/done').set(done);
+}
+
+// ===== タスク追加 =====
+function quickAdd() {
+  const inp = document.getElementById('quickInput');
+  const name = inp.value.trim();
+  if (!name) { inp.style.borderColor='var(--red)'; setTimeout(()=>inp.style.borderColor='',1200); return; }
+  tasks.unshift({ id: Date.now(), name, action:'', deadline:'', color:'none', days:[], createdAt: new Date().toISOString(), origIdx: null });
+  inp.value = '';
+  save(); render(); toast('追加しました');
+}
+
+// ===== ドラッグ（縦並び替え） =====
+function dragStart(e, idx) {
+  dragSrcIdx = idx; e.dataTransfer.effectAllowed = 'move';
+  setTimeout(() => { const el = document.querySelectorAll('.task-row')[idx]; if(el) el.classList.add('dragging'); }, 0);
+}
+function dragOver(e, idx) {
+  if (dragSrcIdx === null) return; e.preventDefault();
+  document.querySelectorAll('.task-row').forEach(el => el.classList.remove('drag-over'));
+  const el = document.querySelectorAll('.task-row')[idx]; if (el) el.classList.add('drag-over');
+}
+function drop(e, idx) {
+  e.preventDefault();
+  document.querySelectorAll('.task-row').forEach(el => el.classList.remove('dragging','drag-over'));
+  if (dragSrcIdx === null || dragSrcIdx === idx) { dragSrcIdx = null; return; }
+  const moved = tasks.splice(dragSrcIdx, 1)[0]; tasks.splice(idx, 0, moved);
+  dragSrcIdx = null; save(); render();
+}
+function dragEnd() { document.querySelectorAll('.task-row').forEach(el => el.classList.remove('dragging','drag-over')); dragSrcIdx = null; }
+
+// ===== 完了処理 =====
+function completeTask(idx) {
+  if (!tasks[idx].action.trim()) {
+    showConf('Next Actionが未入力です', '空欄のまま完了にしますか？', [
+      { label:'このまま完了', ok:true, cb:()=>doComplete(idx) },
+      { label:'Next Actionを入力', ok:false, cb:()=>{ closeConf(); openEdit(idx); } }
+    ]);
+  } else { doComplete(idx); }
+}
+function doComplete(idx) {
+  closeConf();
+  const t = tasks[idx]; t.completedAt = new Date().toISOString(); t.origIdx = idx;
+  done.unshift(t); tasks.splice(idx, 1); save(); render();
+  if (document.getElementById('cpPanel').classList.contains('open')) renderCP();
+  toast('完了しました 🎉');
+}
+
+// ===== 完了一覧操作 =====
+function restoreTop(ci) { const t=done.splice(ci,1)[0]; delete t.completedAt; tasks.unshift(t); save(); render(); renderCP(); toast('先頭に戻しました'); }
+function restorePos(ci) { const t=done.splice(ci,1)[0]; const pos=Math.min(t.origIdx??0,tasks.length); delete t.completedAt; tasks.splice(pos,0,t); save(); render(); renderCP(); toast('元の位置に戻しました'); }
+function delDone(ci) {
+  showConf('完了タスクを削除', `「${done[ci].name}」を完全に削除します。`, [
+    { label:'削除', ok:true, red:true, cb:()=>{ done.splice(ci,1); closeConf(); save(); renderCP(); toast('削除しました'); } },
+    { label:'キャンセル', ok:false, cb:closeConf }
+  ]);
+}
+
+// ===== タスク削除 =====
+function deleteTask(idx) {
+  showConf('タスクを削除', `「${tasks[idx].name}」を削除します。`, [
+    { label:'削除', ok:true, red:true, cb:()=>{ tasks.splice(idx,1); closeConf(); save(); render(); toast('削除しました'); } },
+    { label:'キャンセル', ok:false, cb:closeConf }
+  ]);
+}
+
+// ===== カレンダー操作 =====
+function toggleDay(ti, ds) {
+  if (!tasks[ti].days) tasks[ti].days = [];
+  const i = tasks[ti].days.indexOf(ds);
+  if (i>=0) tasks[ti].days.splice(i,1); else tasks[ti].days.push(ds);
+  save(); renderCal();
+}
+function dotDragStart(e, ti, ds) { dragDotInfo={ti,ds}; e.stopPropagation(); e.dataTransfer.effectAllowed='move'; }
+function calCellDragOver(e, ti, ds) { if (!dragDotInfo||dragDotInfo.ti!==ti) return; e.preventDefault(); e.currentTarget.classList.add('drag-target'); }
+function calCellDragLeave(e) { e.currentTarget.classList.remove('drag-target'); }
+function calCellDrop(e, ti, ds) {
+  e.currentTarget.classList.remove('drag-target');
+  if (!dragDotInfo||dragDotInfo.ti!==ti) { dragDotInfo=null; return; }
+  e.preventDefault();
+  const srcDs = dragDotInfo.ds; if (srcDs===ds) { dragDotInfo=null; return; }
+  const days = tasks[ti].days||[];
+  const i = days.indexOf(srcDs); if (i>=0) days.splice(i,1);
+  if (!days.includes(ds)) days.push(ds);
+  tasks[ti].days = days; dragDotInfo=null; save(); renderCal();
+}
+
+// ===== RENDER =====
+function render() { renderTasks(); renderCal(); }
+
+function renderTasks() {
+  document.getElementById('taskCount').textContent = tasks.length + '件';
+  const el = document.getElementById('taskList');
+  if (tasks.length===0) { el.innerHTML='<div class="empty-msg">タスクを追加してください</div>'; return; }
+  el.innerHTML = tasks.map((t,i) => `
+    <div class="task-row color-${t.color}" draggable="true"
+      ondragstart="dragStart(event,${i})" ondragover="dragOver(event,${i})"
+      ondrop="drop(event,${i})" ondragend="dragEnd()">
+      <div class="color-strip strip-${t.color}"></div>
+      <div class="task-body">
+        <div class="task-num">#${i+1}</div>
+        <div class="task-name">${esc(t.name)}</div>
+        ${t.action ? `<div class="task-sub">▶ ${esc(t.action)}</div>` : `<div class="task-sub" style="color:var(--text-dim);font-style:italic">Next Action未設定</div>`}
+      </div>
+      <div class="task-btns">
+        <button class="tbtn done" onclick="completeTask(${i})">✓</button>
+        <button class="tbtn" onclick="openEdit(${i})">✎</button>
+        <button class="tbtn del" onclick="deleteTask(${i})">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+function renderCal() {
+  const start = calStart(), dates = [], today = new Date(); today.setHours(0,0,0,0);
+  for (let i=0;i<CAL_DAYS;i++) { const d=new Date(start); d.setDate(d.getDate()+i); dates.push(d); }
+  const DAY=['日','月','火','水','木','金','土'];
+  document.getElementById('calRange').textContent = `${dates[0].getMonth()+1}/${dates[0].getDate()} 〜 ${dates[CAL_DAYS-1].getMonth()+1}/${dates[CAL_DAYS-1].getDate()}`;
+  let headHtml='';
+  dates.forEach((d,i) => {
+    const isToday=d.getTime()===today.getTime(), isWE=d.getDay()===0||d.getDay()===6, isHol=isHoliday(d);
+    const cls=isToday?'today-col':isHol?'holiday':isWE?'weekend':'';
+    const top=(d.getDate()===1||i===0)?`<span class="mo">${d.getMonth()+1}月</span>`:`<span class="dn">${d.getDate()}</span>`;
+    headHtml+=`<div class="cal-day-cell ${cls}">${top}${DAY[d.getDay()]}</div>`;
+  });
+  document.getElementById('calHeadRow').innerHTML=headHtml;
+  let bodyHtml='';
+  if (tasks.length===0) { bodyHtml='<div style="padding:20px;color:var(--text-dim);font-size:11px;text-align:center">タスクを追加するとここに表示されます</div>'; }
+  else {
+    tasks.forEach((t,ti) => {
+      bodyHtml+=`<div class="cal-task-row color-${t.color}">`;
+      dates.forEach(d => {
+        const ds=dateStr(d), hasDot=(t.days||[]).includes(ds), isDeadline=t.deadline===ds;
+        const isToday=d.getTime()===today.getTime(), isHol=isHoliday(d);
+        bodyHtml+=`<div class="cal-cell ${isToday?'today-col':''} ${isHol?'holiday-col':''}" onclick="toggleDay(${ti},'${ds}')" ondragover="calCellDragOver(event,${ti},'${ds}')" ondragleave="calCellDragLeave(event)" ondrop="calCellDrop(event,${ti},'${ds}')">`;
+        if (hasDot) bodyHtml+=`<div class="dot dot-${t.color}" draggable="true" ondragstart="dotDragStart(event,${ti},'${ds}')" onclick="event.stopPropagation();toggleDay(${ti},'${ds}')"></div>`;
+        else if (isDeadline) bodyHtml+=`<div class="deadline-tri"></div>`;
+        bodyHtml+='</div>';
+      });
+      bodyHtml+='</div>';
+    });
+  }
+  document.getElementById('calInner').innerHTML=bodyHtml;
+  if (calOff===0) { const idx=dates.findIndex(d=>d.getTime()===today.getTime()); if(idx>=0) setTimeout(()=>{document.getElementById('calScroll').scrollLeft=Math.max(0,idx*44-80);},30); }
+}
+
+function renderCP() {
+  const el=document.getElementById('cpList');
+  if (done.length===0) { el.innerHTML='<div class="empty-msg">完了タスクなし</div>'; return; }
+  el.innerHTML=done.map((t,i)=>`
+    <div class="cp-item">
+      <div class="color-strip strip-${t.color}" style="width:3px;border-radius:2px;align-self:stretch;flex-shrink:0"></div>
+      <div class="cp-item-body">
+        <div class="cp-item-name">${esc(t.name)}</div>
+        ${t.action?`<div style="font-size:10px;color:var(--text-dim)">▶ ${esc(t.action)}</div>`:''}
+        <div class="cp-item-date">完了: ${t.completedAt?new Date(t.completedAt).toLocaleDateString('ja-JP'):'—'}</div>
+      </div>
+      <div class="cp-btns">
+        <button class="cp-btn top" onclick="restoreTop(${i})">↑先頭</button>
+        <button class="cp-btn pos" onclick="restorePos(${i})">↩元位置</button>
+        <button class="cp-btn xdel" onclick="delDone(${i})">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+function syncScroll(src) {
+  if (syncingScroll) return; syncingScroll=true;
+  const tl=document.getElementById('taskListScroll'), cs=document.getElementById('calScroll');
+  if (src===tl) cs.scrollTop=tl.scrollTop; else tl.scrollTop=cs.scrollTop;
+  syncingScroll=false;
+}
+
+function openEdit(idx) {
+  const t=tasks[idx]; editId=t.id; editCol=t.color||'none';
+  document.getElementById('eName').value=t.name;
+  document.getElementById('eAction').value=t.action||'';
+  document.getElementById('eDeadline').value=t.deadline||'';
+  ['red','blue','yellow','none'].forEach(c=>document.getElementById('eco-'+c).classList.toggle('sel',c===editCol));
+  document.getElementById('editModal').classList.add('open');
+  setTimeout(()=>document.getElementById('eAction').focus(),80);
+}
+function closeEdit() { document.getElementById('editModal').classList.remove('open'); editId=null; }
+function setEC(c) { editCol=c; ['red','blue','yellow','none'].forEach(x=>document.getElementById('eco-'+x).classList.toggle('sel',x===c)); }
+function saveEdit() {
+  const name=document.getElementById('eName').value.trim();
+  if (!name) { document.getElementById('eName').style.borderColor='var(--red)'; return; }
+  const idx=tasks.findIndex(t=>t.id===editId); if (idx<0) { closeEdit(); return; }
+  tasks[idx].name=name; tasks[idx].action=document.getElementById('eAction').value.trim();
+  tasks[idx].deadline=document.getElementById('eDeadline').value; tasks[idx].color=editCol;
+  closeEdit(); save(); render(); toast('保存しました');
+}
+
+function showConf(title, msg, actions) {
+  document.getElementById('confTitle').textContent=title;
+  document.getElementById('confMsg').textContent=msg;
+  const el=document.getElementById('confActs'); el.innerHTML='';
+  actions.forEach(a=>{ const b=document.createElement('button'); b.textContent=a.label; b.onclick=a.cb; b.className=a.ok?'btn-ok':'btn-cancel'; if(a.ok)b.style.flex='1'; if(a.red)b.style.background='var(--red)'; el.appendChild(b); });
+  document.getElementById('confBg').classList.add('open');
+}
+function closeConf() { document.getElementById('confBg').classList.remove('open'); }
+
+function toggleCP() { const p=document.getElementById('cpPanel'); p.classList.toggle('open'); if(p.classList.contains('open')) renderCP(); }
+
+const HOLIDAYS=new Set(['2025-01-01','2025-01-13','2025-02-11','2025-02-23','2025-02-24','2025-03-20','2025-04-29','2025-05-03','2025-05-04','2025-05-05','2025-05-06','2025-07-21','2025-08-11','2025-09-15','2025-09-23','2025-10-13','2025-11-03','2025-11-23','2025-11-24','2025-12-23','2026-01-01','2026-01-12','2026-02-11','2026-02-23','2026-03-20','2026-04-29','2026-05-03','2026-05-04','2026-05-05','2026-05-06','2026-07-20','2026-08-11','2026-09-21','2026-09-22','2026-09-23','2026-10-12','2026-11-03','2026-11-23','2027-01-01','2027-01-11','2027-02-11','2027-02-23','2027-03-21','2027-03-22','2027-04-29','2027-05-03','2027-05-04','2027-05-05','2027-07-19','2027-08-11','2027-09-20','2027-09-23','2027-10-11','2027-11-03','2027-11-23']);
+function isHoliday(d) { return HOLIDAYS.has(dateStr(d)); }
+function calStart() { const d=new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()+calOff); return d; }
+function shiftCal(n) { calOff+=n; renderCal(); }
+function goToday() { calOff=0; renderCal(); }
+function dateStr(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function toast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); }
+
+(function() {
+  const inp=document.getElementById('quickInput');
+  inp.addEventListener('compositionstart',()=>{isComposing=true;});
+  inp.addEventListener('compositionend',()=>{isComposing=false;});
+  inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&!isComposing) quickAdd();});
+  const cs=document.getElementById('calScroll'), hrow=document.getElementById('calHeadRow');
+  cs.addEventListener('scroll',function(){ hrow.style.marginLeft='-'+cs.scrollLeft+'px'; syncScroll(cs); });
+})();
+</script>
+</body>
+</html>
