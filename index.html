@@ -18,7 +18,8 @@
   --task-pane-w: 320px;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: var(--bg); color: var(--text); font-family: 'Noto Sans JP', sans-serif; font-size: 13px; min-height: 100vh; display: flex; flex-direction: column; }
+html { height: 100%; overflow: hidden; }
+body { background: var(--bg); color: var(--text); font-family: 'Noto Sans JP', sans-serif; font-size: 13px; height: 100%; overflow: hidden; display: flex; flex-direction: column; }
 header { background: var(--ink); padding: 0 20px; height: 48px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
 .logo { font-family: 'Kaisei Decol', serif; font-size: 18px; color: #f5f2ee; letter-spacing: 2px; }
 .logo span { font-family: 'DM Mono', monospace; font-size: 10px; color: #888; margin-left: 10px; }
@@ -177,20 +178,16 @@ header { background: var(--ink); padding: 0 20px; height: 48px; display: flex; a
   .task-sub { font-size: 9px; }
   .color-strip { width: 3px; }
 
-  /* スマホではボタンを常時表示・横並びコンパクト */
+  /* スマホではボタンを編集のみ常時表示 */
   .task-btns {
     opacity: 1;
     flex-direction: row;
-    gap: 1px;
+    gap: 0;
     padding: 0 2px 0 0;
     flex-shrink: 0;
   }
-  .tbtn {
-    width: 20px;
-    height: 20px;
-    font-size: 11px;
-    border-radius: 2px;
-  }
+  .tbtn { width: 24px; height: 24px; font-size: 13px; border-radius: 2px; }
+  .tbtn.done, .tbtn.del { display: none; }  /* 完了・削除は編集モーダルへ移動 */
 
   /* タッチ並び替えハンドル表示 */
   .drag-handle { display: flex; }
@@ -283,6 +280,12 @@ header { background: var(--ink); padding: 0 20px; height: 48px; display: flex; a
       <button class="btn-ok" onclick="saveEdit()">保存</button>
       <button class="btn-cancel" onclick="closeEdit()">キャンセル</button>
     </div>
+    <!-- スマホのみ表示：完了・削除 -->
+    <div class="modal-mobile-acts" id="modalMobileActs" style="display:none; gap:8px; margin-top:10px;">
+      <button style="flex:1;padding:9px;background:var(--green);color:#fff;border:none;border-radius:var(--radius);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;" onclick="editComplete()">✓ 完了にする</button>
+      <button style="flex:1;padding:9px;background:var(--red);color:#fff;border:none;border-radius:var(--radius);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;" onclick="editDelete()">✕ 削除する</button>
+    </div>
+
   </div>
 </div>
 
@@ -568,11 +571,22 @@ function openEdit(idx) {
   document.getElementById('eAction').value=t.action||'';
   document.getElementById('eDeadline').value=t.deadline||'';
   ['red','blue','yellow','none'].forEach(c=>document.getElementById('eco-'+c).classList.toggle('sel',c===editCol));
+  // スマホのみ完了・削除ボタン表示
+  const mobileActs = document.getElementById('modalMobileActs');
+  mobileActs.style.display = isMobile() ? 'flex' : 'none';
   document.getElementById('editModal').classList.add('open');
   setTimeout(()=>document.getElementById('eName').focus(),80);
 }
 function closeEdit() { document.getElementById('editModal').classList.remove('open'); editId=null; }
 function setEC(c) { editCol=c; ['red','blue','yellow','none'].forEach(x=>document.getElementById('eco-'+x).classList.toggle('sel',x===c)); }
+function editComplete() {
+  const idx=tasks.findIndex(t=>t.id===editId); if(idx<0){closeEdit();return;}
+  closeEdit(); completeTask(idx);
+}
+function editDelete() {
+  const idx=tasks.findIndex(t=>t.id===editId); if(idx<0){closeEdit();return;}
+  closeEdit(); deleteTask(idx);
+}
 function saveEdit() {
   const name=document.getElementById('eName').value.trim();
   if (!name) { document.getElementById('eName').style.borderColor='var(--red)'; return; }
