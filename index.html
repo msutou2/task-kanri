@@ -163,8 +163,11 @@ header { background: var(--ink); padding: 0 20px; height: 48px; display: flex; a
   .pane-title { font-size: 9px; letter-spacing: 1px; }
   .task-count { font-size: 9px; }
 
-  /* メインレイアウト */
-  .main-layout { height: calc(100vh - 48px - 38px - var(--date-head-h)); }
+  /* メインレイアウト：ヘッダー48+ナビ38+入力バー44+日付ヘッド32 */
+  .main-layout { height: calc(100vh - 48px - 44px - 38px - var(--date-head-h)); }
+
+  /* 入力バーの高さをスマホ用に明示 */
+  .addbar { height: 44px; }
 
   /* タスクペイン */
   .task-pane { width: var(--task-pane-w); }
@@ -174,17 +177,19 @@ header { background: var(--ink); padding: 0 20px; height: 48px; display: flex; a
   .task-sub { font-size: 9px; }
   .color-strip { width: 3px; }
 
-  /* スマホではボタンを常時表示・大きく */
+  /* スマホではボタンを常時表示・横並びコンパクト */
   .task-btns {
     opacity: 1;
-    flex-direction: column;
+    flex-direction: row;
     gap: 1px;
-    padding: 2px 2px 2px 0;
+    padding: 0 2px 0 0;
+    flex-shrink: 0;
   }
   .tbtn {
-    width: 26px;
-    height: 26px;
-    font-size: 12px;
+    width: 20px;
+    height: 20px;
+    font-size: 11px;
+    border-radius: 2px;
   }
 
   /* タッチ並び替えハンドル表示 */
